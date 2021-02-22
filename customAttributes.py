@@ -2,6 +2,8 @@ from libs.attributes import AbstractAttributesWidgets
 import os
 import shutil
 
+import functools
+
 class AttributesManager( AbstractAttributesWidgets ):
 
     # used to implement the "natural order" of the various attributes definitions
@@ -35,7 +37,7 @@ class AttributesManager( AbstractAttributesWidgets ):
                 "tooltip": items[i],
                 "default": "no",
                 "type": "checkbox",
-                "action": self.update_label_attributes
+                "action": functools.partial(self.update_label_attribute, i)
             }
         return result
         

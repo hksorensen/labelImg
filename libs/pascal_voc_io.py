@@ -175,6 +175,5 @@ class PascalVocReader:
                 difficult = bool(int(object_iter.find('difficult').text))
             object_attributes = {}
             attributesManager.read_attributes_from_element( object_iter, object_attributes )
-            #print('after return', object_attributes)
             self.addShape( label, bndbox, difficult, object_attributes )
         return True

@@ -58,7 +58,6 @@ class LabelFile(object):
 
     def savePascalVocFormat(self, filename, shapes, imagePath, imageData,
                             lineColor=None, fillColor=None, databaseSrc=None):
-        print ("About to save PASCAL VOC file")
         imgFolderPath = os.path.dirname(imagePath)
         imgFolderName = os.path.split(imgFolderPath)[-1]
         imgFileName = os.path.basename(imagePath)
@@ -77,7 +76,6 @@ class LabelFile(object):
         writer.verified = self.verified
 
         for shape in shapes:
-            print(shape)
             points = shape['points']
             label = shape['label']
             difficult = int(shape['difficult'])

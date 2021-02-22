@@ -20,7 +20,6 @@ def write_attributes_to_element( parent_element, attributes, use_attributes_elem
                 attribute_element = SubElement( attributes_element, attr )
 
             attribute_element.text = str( attributes[ attr ] )
-            print (f'Saving attribute {attr}: {attributes[attr]}')
     else:
         print (f'write_attributes_to_element with no attributes')
 
@@ -30,11 +29,10 @@ def read_attributes_from_element( parent_element, attributes ):
         attributes_element = parent_element.find("attributes")
         if attributes_element is not None:
             for attribute_element in attributes_element.findall("attribute"):
-                #print (f'read from element: {attribute_element.get("key")} -> {attribute_element.text}')
                 attributes[ attribute_element.get( "key" ) ] = attribute_element.text
     except Exception as e:
         print( "Failed to read attributes: {}".format( e ) )
-    #print (f'returning', attributes)
+
 
 # attributes and widgets
 class AttributesWidgets():
@@ -59,10 +57,8 @@ class AttributesWidgets():
             existing_value = existing_attributes[ key ]
         if existing_value != new_value:
             existing_attributes[ key ] = new_value
-            #self.mainWindow.setDirty()
-            print( "updated attribute: key=[{}], new-value=[{}], old-value=[{}]".format( key, new_value, existing_value ) )
-            #traceback.print_stack()
-            #print()
+            self.mainWindow.setDirty()
+            #print( "updated attribute: key=[{}], new-value=[{}], old-value=[{}]".format( key, new_value, existing_value ) )
 
     def set_widget_value( self, widget, value):
         if type(widget) is QLineEdit:
@@ -81,7 +77,7 @@ class AttributesWidgets():
         if type(widget) is QLineEdit:
             return widget.text()
         elif type( widget ) is QCheckBox:
-            if widget.isChecked():
+            if widget.checkState():
                 return "yes"
             else:
                 return "no"
@@ -124,8 +120,11 @@ class AttributesWidgets():
                 widget.toggled.connect( action )
 
         elif type == "checkbox":
+            #widget = hksCheckBox(self.mainWindow, key, action)
             widget = QCheckBox( self.mainWindow )
-            widget.setText( key )
+            widget.setText(key)
+            if "default" in definition:
+                widget.setChecked( definition["default"] == "yes" )        
             if action is not None:
                 widget.toggled.connect( action )
 
@@ -200,7 +199,7 @@ class AttributesWidgets():
                 value = None
             self.set_widget_value( widget, value )
 
-    def update_label_attributes( self ):
+    def update_label_attributes(self, state):
         shape = self.mainWindow.canvas.selectedShape
         if shape:
             if shape.attributes is None:
@@ -211,6 +210,16 @@ class AttributesWidgets():
                     w,
                     shape.attributes,
                     self.get_widget_value( self.labelAttributeWidgets[ w ] ) )
+
+    def update_label_attribute(self, key, state):
+        shape = self.mainWindow.canvas.selectedShape
+        if shape:
+            if shape.attributes is None:
+                 shape.attributes = {}
+            self.maybe_update_attribute(
+                key,
+                shape.attributes,
+                self.get_widget_value( self.labelAttributeWidgets[ key ] ) )
 
 # methods called by labelImg.py
 class AbstractAttributesWidgets( AttributesWidgets ):

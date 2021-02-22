@@ -1016,8 +1016,8 @@ class MainWindow(QMainWindow, WindowMixin):
         new_h_bar_value = h_bar.value() + move_x * d_h_bar_max
         new_v_bar_value = v_bar.value() + move_y * d_v_bar_max
 
-        h_bar.setValue(new_h_bar_value)
-        v_bar.setValue(new_v_bar_value)
+        h_bar.setValue(int(new_h_bar_value))
+        v_bar.setValue(int(new_v_bar_value))
 
     def setFitWindow(self, value=True):
         if value:
@@ -1539,7 +1539,6 @@ class MainWindow(QMainWindow, WindowMixin):
         self.set_format(FORMAT_YOLO)
         tYoloParseReader = YoloReader(txtPath, self.image)
         shapes = tYoloParseReader.getShapes()
-        print (shapes)
         self.loadLabels(shapes)
         self.canvas.verified = tYoloParseReader.verified
 
