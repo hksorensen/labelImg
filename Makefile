@@ -1,5 +1,8 @@
 # ex: set ts=8 noet:
 
+brew:
+	brew install pyqt5
+
 all: qt5 test
 
 test: testpy3

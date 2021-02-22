@@ -1,7 +1,8 @@
 # base implementation for AttributesManager
 
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 from xml.etree.ElementTree import SubElement
+import traceback
 
 # imported by pascal_voc_io.py
 def write_attributes_to_element( parent_element, attributes, use_attributes_element = True, use_attribute_element = True ):
@@ -19,6 +20,9 @@ def write_attributes_to_element( parent_element, attributes, use_attributes_elem
                 attribute_element = SubElement( attributes_element, attr )
 
             attribute_element.text = str( attributes[ attr ] )
+            print (f'Saving attribute {attr}: {attributes[attr]}')
+    else:
+        print (f'write_attributes_to_element with no attributes')
 
 # imported by pascal_voc_io.py
 def read_attributes_from_element( parent_element, attributes ):
@@ -26,9 +30,11 @@ def read_attributes_from_element( parent_element, attributes ):
         attributes_element = parent_element.find("attributes")
         if attributes_element is not None:
             for attribute_element in attributes_element.findall("attribute"):
+                #print (f'read from element: {attribute_element.get("key")} -> {attribute_element.text}')
                 attributes[ attribute_element.get( "key" ) ] = attribute_element.text
     except Exception as e:
         print( "Failed to read attributes: {}".format( e ) )
+    #print (f'returning', attributes)
 
 # attributes and widgets
 class AttributesWidgets():
@@ -53,8 +59,10 @@ class AttributesWidgets():
             existing_value = existing_attributes[ key ]
         if existing_value != new_value:
             existing_attributes[ key ] = new_value
-            self.mainWindow.setDirty()
+            #self.mainWindow.setDirty()
             print( "updated attribute: key=[{}], new-value=[{}], old-value=[{}]".format( key, new_value, existing_value ) )
+            #traceback.print_stack()
+            #print()
 
     def set_widget_value( self, widget, value):
         if type(widget) is QLineEdit:
@@ -152,7 +160,8 @@ class AttributesWidgets():
         for item in sortedList:
             key = item["key"]
             widget = self.build_widget( key, item["definition"] )
-            layout.addRow( key, widget )
+            #layout.addRow( key, widget )
+            layout.addRow( widget )
             widgets[ key ] = widget
         return widgets
 
@@ -169,22 +178,11 @@ class AttributesWidgets():
         return attributeWidgets
 
     def installWidgets( self ):
-        self.mainWindow.attributes = {}
-
-        self.imageAttributeWidgets = self.installWidgetScope(
-            "Image Attributes",
-            "ImageAttributes",
-            self.get_image_attribute_definitions() )
-
+        #self.mainWindow.attributes = {}
         self.labelAttributeWidgets = self.installWidgetScope(
             "Label Attributes",
             "LabelAttributes",
             self.get_label_attribute_definitions() )
-
-        self.globalAttributeWidgets = self.installWidgetScope(
-            "Custom Operations",
-            "CustomAttributes",
-            self.get_global_attribute_definitions() )
 
     def loadAttributes(self, attributes, widgets ):
         for attr in widgets:
@@ -202,20 +200,12 @@ class AttributesWidgets():
                 value = None
             self.set_widget_value( widget, value )
 
-    def update_image_attributes( self ):
-        # but only if there's an image loaded
-        if self.mainWindow.filePath:
-            for w in self.imageAttributeWidgets:
-                self.maybe_update_attribute(
-                    w,
-                    self.mainWindow.attributes,
-                    self.get_widget_value( self.imageAttributeWidgets[ w ] ) )
-        else:
-            print( "No filepath: {}".format( self.mainWindow.filePath ) )
-
     def update_label_attributes( self ):
         shape = self.mainWindow.canvas.selectedShape
         if shape:
+            if shape.attributes is None:
+                 shape.attributes = {}
+
             for w in self.labelAttributeWidgets:
                 self.maybe_update_attribute(
                     w,
@@ -226,14 +216,8 @@ class AttributesWidgets():
 class AbstractAttributesWidgets( AttributesWidgets ):
 
     def resetState( self ):
-        for w in self.imageAttributeWidgets:
-            self.set_widget_value( self.imageAttributeWidgets[w], None )
         for w in self.labelAttributeWidgets:
             self.set_widget_value( self.labelAttributeWidgets[w], None )
-
-    def loadImageAttributes(self, image_attributes):
-        self.mainWindow.attributes = image_attributes
-        self.loadAttributes( image_attributes, self.imageAttributeWidgets)
 
     def loadLabelAttributes( self, label_attributes ):
         self.loadAttributes( label_attributes, self.labelAttributeWidgets)

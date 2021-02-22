@@ -49,6 +49,8 @@ from libs.create_ml_io import JSON_EXT
 from libs.ustr import ustr
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
 
+from customAttributes import AttributesManager
+
 __appname__ = 'labelImg'
 
 
@@ -201,6 +203,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.dockFeatures = QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable
         self.dock.setFeatures(self.dock.features() ^ self.dockFeatures)
+
+        self.attributes_manager = AttributesManager( self, Qt.RightDockWidgetArea )
 
         # Actions
         action = partial(newAction, self)
@@ -614,6 +618,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.resetState()
         self.labelCoordinates.clear()
         self.comboBox.cb.clear()
+        self.attributes_manager.resetState()
 
     def currentItem(self):
         items = self.labelList.selectedItems()
@@ -790,7 +795,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadLabels(self, shapes):
         s = []
-        for label, points, line_color, fill_color, difficult in shapes:
+        for label, points, line_color, fill_color, difficult, attributes in shapes:
             shape = Shape(label=label)
             for x, y in points:
 
@@ -801,6 +806,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
                 shape.addPoint(QPointF(x, y))
             shape.difficult = difficult
+            shape.attributes = attributes
             shape.close()
             s.append(shape)
 
@@ -840,8 +846,9 @@ class MainWindow(QMainWindow, WindowMixin):
                         line_color=s.line_color.getRgb(),
                         fill_color=s.fill_color.getRgb(),
                         points=[(p.x(), p.y()) for p in s.points],
-                       # add chris
-                        difficult = s.difficult)
+                        difficult = s.difficult,
+                        attributes = s.attributes,
+                        )
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
@@ -891,8 +898,10 @@ class MainWindow(QMainWindow, WindowMixin):
             self._noSelectionSlot = True
             self.canvas.selectShape(self.itemsToShapes[item])
             shape = self.itemsToShapes[item]
-            # Add Chris
             self.diffcButton.setChecked(shape.difficult)
+            self.attributes_manager.loadLabelAttributes( shape.attributes )
+        else:
+            self.attributes_manager.loadLabelAttributes( None )      
 
     def labelItemChanged(self, item):
         shape = self.itemsToShapes[item]
@@ -947,7 +956,7 @@ class MainWindow(QMainWindow, WindowMixin):
     def scrollRequest(self, delta, orientation):
         units = - delta / (8 * 15)
         bar = self.scrollBars[orientation]
-        bar.setValue(bar.value() + bar.singleStep() * units)
+        bar.setValue(int(bar.value() + bar.singleStep() * units))
 
     def setZoom(self, value):
         self.actions.fitWidth.setChecked(False)
@@ -1519,6 +1528,7 @@ class MainWindow(QMainWindow, WindowMixin):
         shapes = tVocParseReader.getShapes()
         self.loadLabels(shapes)
         self.canvas.verified = tVocParseReader.verified
+        #self.attributes_manager.loadImageAttributes( tVocParseReader.getAttributes() )
 
     def loadYOLOTXTByFilename(self, txtPath):
         if self.filePath is None:

@@ -37,6 +37,7 @@ class LabelFile(object):
         self.imagePath = None
         self.imageData = None
         self.verified = False
+        self.attributes = {}
 
     def saveCreateMLFormat(self, filename, shapes, imagePath, imageData, classList, lineColor=None, fillColor=None, databaseSrc=None):
         imgFolderPath = os.path.dirname(imagePath)
@@ -57,6 +58,7 @@ class LabelFile(object):
 
     def savePascalVocFormat(self, filename, shapes, imagePath, imageData,
                             lineColor=None, fillColor=None, databaseSrc=None):
+        print ("About to save PASCAL VOC file")
         imgFolderPath = os.path.dirname(imagePath)
         imgFolderName = os.path.split(imgFolderPath)[-1]
         imgFileName = os.path.basename(imagePath)
@@ -75,12 +77,15 @@ class LabelFile(object):
         writer.verified = self.verified
 
         for shape in shapes:
+            print(shape)
             points = shape['points']
             label = shape['label']
-            # Add Chris
             difficult = int(shape['difficult'])
+            label_attributes = []
+            if 'attributes' in shape:
+                 label_attributes = shape['attributes']
             bndbox = LabelFile.convertPoints2BndBox(points)
-            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
+            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult, label_attributes)
 
         writer.save(targetFile=filename)
         return
